@@ -17,7 +17,7 @@ interface Products {
     id: string,
     name: string,
     imageUrl: string,
-    price: number
+    price: string
 }
 
 interface HomeProps {
@@ -39,6 +39,7 @@ export default function Home({ products }: HomeProps) {
                     <Link 
                         key={product.id}
                         href={`/product/${product.id}`} 
+                        prefetch={false}
                     >
                         <Product 
                             className="keen-slider__slide"
@@ -81,6 +82,6 @@ export const getStaticProps: GetStaticProps = async () => {
             products
         },
 
-        revalidate: 60 * 60 / 2 // 2 horas
+        revalidate: 60 * 60 / 2 // 2 hours
     }
 }

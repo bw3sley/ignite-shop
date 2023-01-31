@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { GetStaticPaths, GetStaticProps } from "next";
 
 import Stripe from "stripe";
@@ -6,8 +8,9 @@ import { stripe } from "../../lib/stripe";
 
 import { ImageContainer, ProductContainer, ProductDetails } from "../../styles/pages/product";
 
+import axios from "axios";
+
 import Image from "next/image";
-import { useRouter } from "next/router";
 
 interface ProductProps {
     product: {
@@ -15,15 +18,32 @@ interface ProductProps {
         name: string,
         imageUrl: string,
         price: string,
-        description: string
+        description: string,
+        defaultPriceId: string
     }
 }
 
 export default function Product({ product }: ProductProps) {
-    const { isFallback } = useRouter();
+    const [isCreatingCheckoutSession, setIsCreatingCheckoutSession] = useState(false);
 
-    if(isFallback) {
-        return console.warn("Loading...");
+    async function handleBuyProduct() {
+        try {
+            setIsCreatingCheckoutSession(true);
+
+            const response = await axios.post("/api/checkout", {
+                priceId: product.defaultPriceId
+            })
+
+            const { checkoutUrl } = response.data;
+
+            window.location.href = checkoutUrl;
+        } 
+        
+        catch (error) {
+            setIsCreatingCheckoutSession(false);
+
+            alert("Falha ao redirecionar ao checkout!");   
+        }
     }
 
     return (
@@ -38,7 +58,7 @@ export default function Product({ product }: ProductProps) {
 
                 <p>{product.description}</p>
 
-                <button type="button">Comprar agora</button>
+                <button type="button" disabled={isCreatingCheckoutSession} onClick={handleBuyProduct}>Comprar agora</button>
             </ProductDetails>
         </ProductContainer>
     )
@@ -70,6 +90,7 @@ export const getStaticProps: GetStaticProps<any, { id: string }> = async ({ para
                 name: product.name,
                 imageUrl: product.images[0],
                 description: product.description,
+                defaultPriceId: price.id,
                 price: new Intl.NumberFormat("pt-BR", {
                     style: "currency",
                     currency: "BRL"
